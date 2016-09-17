@@ -1,8 +1,8 @@
 package ch.hackzurich.idscan;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -13,6 +13,8 @@ import java.net.URL;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -34,8 +36,21 @@ public class OpenPhotoActivity extends AppCompatActivity {
     
     private static final int REQUEST_IMAGE_CAPTURE = 1;
 
+    private static String capturedPhotoFilePath;
+    
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    
+        File tempFile = null;
+        try {
+            tempFile = File.createTempFile("idscan", ".jpg");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        capturedPhotoFilePath = tempFile.getAbsolutePath();
+        Uri capturedPhotoUri = Uri.fromFile(tempFile);
+        
+        takePictureIntent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, capturedPhotoUri);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
@@ -81,19 +96,24 @@ public class OpenPhotoActivity extends AppCompatActivity {
     }
     
     @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        bundle.putString("fileName", capturedPhotoFilePath);
+    }
+    
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         // Check which request we're responding to
         if (requestCode == REQUEST_IMAGE_CAPTURE) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
-                Bundle extras = intent.getExtras(); 
-                Bitmap bitmap = (Bitmap) extras.get("data");
+                Bitmap bitmap = BitmapFactory.decodeFile(capturedPhotoFilePath, new BitmapFactory.Options());
                 
                 ImageView imageView = (ImageView) findViewById(R.id.photo);
                 imageView.setImageBitmap(bitmap);
                 
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] byteArray = stream.toByteArray();
                 
                 new AsyncTask<byte[], Void, Void>() {
@@ -114,6 +134,10 @@ public class OpenPhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_open_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        
+        if (savedInstanceState != null) {
+            capturedPhotoFilePath = savedInstanceState.getString("fileName");
+        }
         
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {

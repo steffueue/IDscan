@@ -13,5 +13,8 @@
         tools:showIn="@layout/activity_open_photo"
         tools:context="ch.hackzurich.idscan.OpenPhotoActivity">
 
-    <ImageView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/photo"/>
+    <ImageView android:layout_width="match_parent" 
+               android:layout_height="wrap_content" 
+               android:id="@+id/photo" 
+    />
 </RelativeLayout>
