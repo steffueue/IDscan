@@ -1,22 +1,13 @@
 package ch.hackzurich.idscan;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -26,11 +17,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import ch.hackzurich.idscan.config.Configuration;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 // TODO: fix the rotate issue (save file path on onPause and create file again onCreate)
 public class OpenPhotoActivity extends AppCompatActivity {
@@ -124,25 +120,16 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 ImageView imageView = (ImageView) findViewById(R.id.photo);
                 Bitmap bitmap = createBitMap();
                 imageView.setImageBitmap(bitmap);
-                
-//                new AsyncTask<byte[], Void, Void>() {
-//
-//                    @Override
-//                    protected Void doInBackground(byte[]... bytes) {
-//                        sendImageToOCRService(bytes[0]);
-//                        return null;
-//                    }
-//                }.execute(byteArray);
+                displayText(bitmap);
             }
         }
     }
 
-    private void testImageService() {
-        new AsyncTask<Void, Void, Void>() {
-
+    private void displayText(Bitmap image) {
+        new AsyncTask<Bitmap, Void, Void>() {
             @Override
-            protected Void doInBackground(Void... none) {
-                final Bitmap image = BitmapFactory.decodeResource(getResources(), R.drawable.pass);
+            protected Void doInBackground(Bitmap... images) {
+                Bitmap image = images[0];
                 Log.i(TAG, "width: " + image.getWidth());
                 Log.i(TAG, "height: " + image.getHeight());
                 try {
@@ -164,7 +151,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 }
                 return null;
             }
-        }.execute();
+        }.execute(image);
     }
 
     @Override
@@ -180,8 +167,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                testImageService();
-//                dispatchTakePictureIntent();
+                dispatchTakePictureIntent();
             }
         });
     }
