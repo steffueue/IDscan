@@ -3,8 +3,10 @@ package ch.hackzurich.idscan;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -142,6 +144,16 @@ public class OpenPhotoActivity extends AppCompatActivity {
         return bitmap;
     }
     
+    protected Bitmap cutUpperLeftCornerOfBitmap(Bitmap bitmap) {
+        // cut the upper left corner
+        Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth() / 2, bitmap.getHeight() / 2, Bitmap.Config.ARGB_8888);  
+        Rect destRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2);
+        Rect srcRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2); 
+        Canvas canvas = new Canvas(newBitmap);
+        canvas.drawBitmap(bitmap, srcRect, destRect, null);
+        return newBitmap;
+    }
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         // Check which request we're responding to
@@ -151,6 +163,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Bitmap bitmap = showImage();
                 if (idUpload) {
                     extractIdentityInformation(bitmap);
+                    bitmap = cutUpperLeftCornerOfBitmap(bitmap);
                 }
                 detectFace(bitmap);
             }
