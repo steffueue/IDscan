@@ -256,13 +256,14 @@ public class OpenPhotoActivity extends AppCompatActivity {
 
     private String lastFaceId = null;
 
-    private void detectFace(Bitmap image) {
-        new AsyncTask<Bitmap, Void, Void>() {
+    private AsyncTask<Bitmap, Void, String> detectFace(Bitmap image) {
+        return new AsyncTask<Bitmap, Void, String>() {
             @Override
-            protected Void doInBackground(Bitmap... images) {
+            protected String doInBackground(Bitmap... images) {
                 Bitmap image = images[0];
                 Log.v(TAG, "width: " + image.getWidth());
                 Log.v(TAG, "height: " + image.getHeight());
+                String faceId = null;
                 try {
                     final JSONArray faces = imageService.detectFaces(image);
                     if (faces.length() == 0) {
@@ -282,21 +283,18 @@ public class OpenPhotoActivity extends AppCompatActivity {
                         });
                         for (int i = 0; i < faces.length(); i++) {
                             final JSONObject face = faces.getJSONObject(i);
-                            final String faceId = face.getString("faceId");
+                            faceId = face.getString("faceId");
                             Log.d(TAG, "faceId: " + faceId);
                             final JSONObject faceAttributes = face.getJSONObject("faceAttributes");
                             Log.d(TAG, "gender: " + faceAttributes.getString("gender"));
                             Log.d(TAG, "age: " + faceAttributes.getString("age"));
 
+                            // TODO: Move to the caller!
                             if (lastFaceId != null) {
                                 final JSONObject response = imageService.verifyFaces(lastFaceId, faceId);
                                 Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
                                 Log.d(TAG, "confidence: " + response.getString("confidence"));
-                                if (response.getString("isIdentical").equalsIgnoreCase("true")) {
-                                    displayConfirmation(true);
-                                } else {
-                                    displayConfirmation(false);
-                                }
+                                displayConfirmation(response.getString("isIdentical").equalsIgnoreCase("true"));
                             }
                             lastFaceId = faceId;
                         }
@@ -304,7 +302,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
-                return null;
+                return faceId;
             }
         }.execute(image);
     }
