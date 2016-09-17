@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
@@ -19,7 +18,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
-import org.json.JSONArray;
+import android.widget.TextView;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -35,14 +37,21 @@ public class OpenPhotoActivity extends AppCompatActivity {
     private static final String TAG = OpenPhotoActivity.class.getSimpleName();
     
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-
+    
     public static OpenPhotoActivity activity;
-
+    
+    public LabelService labelService = new LabelService();
+    
     /**
      * The file which stores the photo that we just took.
      */
     private File photoFile;
-
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
+    
     /**
      * Create a unique file name.
      */
@@ -52,15 +61,15 @@ public class OpenPhotoActivity extends AppCompatActivity {
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
-            imageFileName,  /* prefix */
-            ".jpg",         /* suffix */
-            storageDir      /* directory */
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
         );
         photoFile = image;
-
+    
         return image;
     }
-
+    
     /**
      * Takes a picture and stores it in the external storage.
      */
@@ -71,10 +80,10 @@ public class OpenPhotoActivity extends AppCompatActivity {
 //                        Manifest.permission.READ_EXTERNAL_STORAGE}, 2909);
 //            }
 //        }
-
+    
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        
-            // Ensure that there's a camera activity to handle the intent
+    
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             // Create the File where the photo should go
             File photoFile = null;
@@ -87,8 +96,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
-                                                      "ch.hackzurich.idscan.fileprovider",
-                                                      photoFile);
+                        "ch.hackzurich.idscan.fileprovider",
+                        photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
@@ -123,12 +132,80 @@ public class OpenPhotoActivity extends AppCompatActivity {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 Bitmap bitmap = showImage();
-                displayText(bitmap);
+                extractIdentityInformation(bitmap);
             }
         }
     }
-
-    private void displayText(Bitmap image) {
+    
+    @Override
+    public void onStart() {
+        super.onStart();
+        
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "OpenPhoto Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://ch.hackzurich.idscan/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+    
+    @Override
+    public void onStop() {
+        super.onStop();
+        
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "OpenPhoto Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://ch.hackzurich.idscan/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+    
+    static class DisplayIdentityCard implements Runnable {
+    
+        private final IdentityCard identityCard;
+        
+        DisplayIdentityCard(IdentityCard identityCard) {
+            this.identityCard = identityCard;
+        }
+        
+        @Override
+        public void run() {
+            TextView surnameText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_surname);
+            surnameText.setText(identityCard.getSurname());
+            TextView givenNameText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_givenname);
+            givenNameText.setText(identityCard.getGivenNames());
+            TextView nationalityText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_nationality);
+            nationalityText.setText(identityCard.getNationality());
+            TextView dateOfBirth = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_dateofbirth);
+            if (identityCard.getDateOfBirth() != null) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.mm.yyyy");
+                dateOfBirth.setText(simpleDateFormat.format(identityCard.getDateOfBirth()));
+            }
+        }
+    }
+    
+    private void displayText(IdentityCard identityCard) {
+        runOnUiThread(new DisplayIdentityCard(identityCard));
+    }
+    
+    private void extractIdentityInformation(Bitmap image) {
         new AsyncTask<Bitmap, Void, Void>() {
             @Override
             protected Void doInBackground(Bitmap... images) {
@@ -138,18 +215,11 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 try {
 //                    ImageService.verifyFaces("1678c33c-faff-4727-a10f-15fc32ab88bd", "69f0fbca-5b67-4ed6-ace5-ef84cad53700");
                     final JSONObject jsonObject = ImageService.extractText(image);
-                    final JSONArray regions = jsonObject.getJSONArray("regions");
-                    for (int i = 0; i < regions.length(); i++) {
-                        Log.d(TAG, "Region " + (i + 1));
-                        final JSONArray lines = regions.getJSONObject(i).getJSONArray("lines");
-                        for (int j = 0; j < lines.length(); j++) {
-                            Log.d(TAG, "Line " + (j + 1));
-                            final JSONArray words = lines.getJSONObject(j).getJSONArray("words");
-                            for (int k = 0; k < words.length(); k++) {
-                                Log.d(TAG, "Word " + (k + 1) + ": " + words.getJSONObject(k).getString("text"));
-                            }
-                        }
-                    }
+                    IdentityCard identityCard = labelService.parse(jsonObject);
+                    
+                    Log.d(TAG, "Parsed identity: " + identityCard);
+                    displayText(identityCard);
+                    
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
@@ -172,14 +242,14 @@ public class OpenPhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_open_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        
+    
         if (savedInstanceState != null && savedInstanceState.getString("photoFile") != null) {
             photoFile = new File(savedInstanceState.getString("photoFile"));
             showImage();
         }
     
         activity = this;
-        
+    
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -187,6 +257,9 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 dispatchTakePictureIntent();
             }
         });
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
     
     @Override

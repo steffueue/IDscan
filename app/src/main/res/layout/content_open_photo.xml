@@ -7,14 +7,37 @@
         android:layout_height="match_parent"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingTop="64dp"
         android:paddingBottom="@dimen/activity_vertical_margin"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/activity_open_photo"
         tools:context="ch.hackzurich.idscan.OpenPhotoActivity">
 
-    <ImageView android:layout_width="match_parent" 
-               android:layout_height="wrap_content" 
-               android:id="@+id/photo" 
-    />
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+            <ImageView android:layout_width="wrap_content" 
+                       android:layout_height="wrap_content" 
+                       android:id="@+id/photo" android:src="@drawable/template"
+                       android:adjustViewBounds="true"
+                       android:scaleType="fitStart"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="32dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity information" style="@android:style/TextAppearance.Large"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Surname:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_surname" style="@android:style/TextAppearance.Medium"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Given Name:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_givenname" style="@android:style/TextAppearance.Medium"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nationality:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_nationality" style="@android:style/TextAppearance.Medium"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Date of Birth:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_dateofbirth" style="@android:style/TextAppearance.Medium"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </RelativeLayout>
