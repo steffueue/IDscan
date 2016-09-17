@@ -121,6 +121,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Bitmap bitmap = createBitMap();
                 imageView.setImageBitmap(bitmap);
                 displayText(bitmap);
+                detectFace(bitmap);
             }
         }
     }
@@ -130,10 +131,9 @@ public class OpenPhotoActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Bitmap... images) {
                 Bitmap image = images[0];
-                Log.i(TAG, "width: " + image.getWidth());
-                Log.i(TAG, "height: " + image.getHeight());
+                Log.v(TAG, "width: " + image.getWidth());
+                Log.v(TAG, "height: " + image.getHeight());
                 try {
-//                    ImageService.verifyFaces("1678c33c-faff-4727-a10f-15fc32ab88bd", "69f0fbca-5b67-4ed6-ace5-ef84cad53700");
                     final JSONObject jsonObject = ImageService.extractText(image);
                     final JSONArray regions = jsonObject.getJSONArray("regions");
                     for (int i = 0; i < regions.length(); i++) {
@@ -145,6 +145,44 @@ public class OpenPhotoActivity extends AppCompatActivity {
                             for (int k = 0; k < words.length(); k++) {
                                 Log.d(TAG, "Word " + (k + 1) + ": " + words.getJSONObject(k).getString("text"));
                             }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                }
+                return null;
+            }
+        }.execute(image);
+    }
+
+    private String lastFaceId = null;
+
+    private void detectFace(Bitmap image) {
+        new AsyncTask<Bitmap, Void, Void>() {
+            @Override
+            protected Void doInBackground(Bitmap... images) {
+                Bitmap image = images[0];
+                Log.v(TAG, "width: " + image.getWidth());
+                Log.v(TAG, "height: " + image.getHeight());
+                try {
+                    final JSONArray faces = ImageService.detectFaces(image);
+                    if (faces.length() == 0) {
+                        Log.d(TAG, "no faces detected");
+                    } else {
+                        for (int i = 0; i < faces.length(); i++) {
+                            final JSONObject face = faces.getJSONObject(i);
+                            final String faceId = face.getString("faceId");
+                            Log.d(TAG, "faceId: " + faceId);
+                            final JSONObject faceAttributes = face.getJSONObject("faceAttributes");
+                            Log.d(TAG, "gender: " + faceAttributes.getString("gender"));
+                            Log.d(TAG, "age: " + faceAttributes.getString("age"));
+
+                            if (lastFaceId != null) {
+                                final JSONObject response = ImageService.verifyFaces(lastFaceId, faceId);
+                                Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
+                                Log.d(TAG, "confidence: " + response.getString("confidence"));
+                            }
+                            lastFaceId = faceId;
                         }
                     }
                 } catch (Exception e) {

@@ -3,6 +3,7 @@ package ch.hackzurich.idscan;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,13 +41,15 @@ public class ImageService {
         image.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         byte[] bytes = stream.toByteArray();
 
+        Log.v(TAG, "image size: " + (bytes.length / 1024) + " kb");
+
         OutputStream outputStream = connection.getOutputStream();
         outputStream.write(bytes);
         outputStream.close();
     }
 
-    private static JSONObject getResponse(HttpURLConnection connection) throws IOException, JSONException {
-        Log.d(TAG, "Response Code: " + connection.getResponseCode());
+    private static String getResponse(HttpURLConnection connection) throws IOException, JSONException {
+        Log.v(TAG, "Response Code: " + connection.getResponseCode());
 
         final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
         StringBuilder response = new StringBuilder();
@@ -56,38 +59,38 @@ public class ImageService {
             response.append(line);
         }
 
-        Log.d(TAG, "Response Content: " + response.toString());
-        return new JSONObject(response.toString());
+        Log.v(TAG, "Response Content: " + response.toString());
+        return response.toString();
     }
 
     public static JSONObject extractText(Bitmap image) throws IOException, JSONException {
-        Log.i(TAG, "extract text");
+        Log.v(TAG, "extract text");
         HttpURLConnection connection = getConnection("microsoft.ocr.api.url", "octet-stream", "microsoft.ocr.api.key");
         writeImage(image, connection);
-        return getResponse(connection);
+        return new JSONObject(getResponse(connection));
     }
 
-    public static JSONObject detectFace(Bitmap image) throws Exception {
-        Log.i(TAG, "detect face");
+    public static JSONArray detectFaces(Bitmap image) throws Exception {
+        Log.v(TAG, "detect face");
         HttpURLConnection connection = getConnection("microsoft.face.detect.api.url", "octet-stream", "microsoft.face.api.key");
         writeImage(image, connection);
-        return getResponse(connection);
+        return new JSONArray(getResponse(connection));
     }
 
     public static JSONObject verifyFaces(String faceId1, String faceId2) throws Exception {
-        Log.i(TAG, "verify faces");
+        Log.v(TAG, "verify faces");
         HttpURLConnection connection = getConnection("microsoft.face.verify.api.url", "json", "microsoft.face.api.key");
 
         final JSONObject jsonObject = new JSONObject();
         jsonObject.put("faceId1", faceId1);
         jsonObject.put("faceId2", faceId2);
         final String request = jsonObject.toString();
-        Log.d(TAG, request);
+        Log.v(TAG, request);
 
         OutputStream outputStream = connection.getOutputStream();
         outputStream.write(request.getBytes("UTF-8"));
         outputStream.close();
-        return getResponse(connection);
+        return new JSONObject(getResponse(connection));
     }
 
 }
