@@ -54,7 +54,7 @@
                        android:clickable="true"
                        android:layout_marginTop="16dp"
             />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_confirmation" style="@android:style/TextAppearance.Medium"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_confirmation" style="@android:style/TextAppearance.Large" android:layout_marginTop="16dp" android:layout_marginBottom="32dp"/>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

@@ -72,9 +72,11 @@ public class LabelService {
                 if (isLikelyAllCaps(word) && word.length() > 4) {
                     use = true;
                 } else if (isDate(word.replaceAll(" ", ""))) {
-                    use = true;
                     try {
                         date = new SimpleDateFormat("dd.mm.yyyy").parse(word.replaceAll(" ", ""));
+                        if (date.getTime() >= System.currentTimeMillis() - (5 * 365 * 24 * 60 * 60 * 1000)) {
+                            date = null;
+                        }
                     } catch (ParseException e) {
                         Log.e(TAG, e.getMessage(), e);
                     }

@@ -222,10 +222,10 @@ public class OpenPhotoActivity extends AppCompatActivity {
         public void run() {
             TextView confirmationText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_confirmation);
             if (positive) {
-                confirmationText.setText("Identität bestätigt");
+                confirmationText.setText("Identity confirmed");
                 confirmationText.setTextColor(Color.parseColor("#338A53"));
             } else {
-                confirmationText.setText("Identität nicht bestätigt");
+                confirmationText.setText("Identity not confirmed");
                 confirmationText.setTextColor(Color.parseColor("#B51D1D"));
             }
         }
