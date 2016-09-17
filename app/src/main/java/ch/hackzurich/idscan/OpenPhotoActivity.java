@@ -195,7 +195,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
             if (identityCard.getDateOfBirth() != null) {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.mm.yyyy");
                 dateOfBirth.setText(simpleDateFormat.format(identityCard.getDateOfBirth()));
-                final double age = (new Date().getTime() - identityCard.getDateOfBirth().getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+                final double age = (new Date().getTime() - identityCard.getDateOfBirth().getTime()) / (1000 * 60 * 60 * 24 * 365.2422);
                 textAge.setText(Double.toString(Math.round(age * 10) / 10.0));
                 if (age >= 18.0) {
                     textAge.setTextColor(Color.parseColor("#338A53"));
