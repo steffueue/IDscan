@@ -19,9 +19,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import android.widget.TextView;
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -46,12 +44,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
      * The file which stores the photo that we just took.
      */
     private File photoFile;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
-    
+
     /**
      * Create a unique file name.
      */
@@ -133,50 +126,11 @@ public class OpenPhotoActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 Bitmap bitmap = showImage();
                 extractIdentityInformation(bitmap);
+                detectFace(bitmap);
             }
         }
     }
-    
-    @Override
-    public void onStart() {
-        super.onStart();
-        
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "OpenPhoto Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://ch.hackzurich.idscan/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
-    }
-    
-    @Override
-    public void onStop() {
-        super.onStop();
-        
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "OpenPhoto Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://ch.hackzurich.idscan/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
-    }
-    
+
     static class DisplayIdentityCard implements Runnable {
     
         private final IdentityCard identityCard;
@@ -210,10 +164,9 @@ public class OpenPhotoActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Bitmap... images) {
                 Bitmap image = images[0];
-                Log.i(TAG, "width: " + image.getWidth());
-                Log.i(TAG, "height: " + image.getHeight());
+                Log.v(TAG, "width: " + image.getWidth());
+                Log.v(TAG, "height: " + image.getHeight());
                 try {
-//                    ImageService.verifyFaces("1678c33c-faff-4727-a10f-15fc32ab88bd", "69f0fbca-5b67-4ed6-ace5-ef84cad53700");
                     final JSONObject jsonObject = ImageService.extractText(image);
                     IdentityCard identityCard = labelService.parse(jsonObject);
                     
@@ -228,6 +181,45 @@ public class OpenPhotoActivity extends AppCompatActivity {
         }.execute(image);
     }
     
+
+    private String lastFaceId = null;
+
+    private void detectFace(Bitmap image) {
+        new AsyncTask<Bitmap, Void, Void>() {
+            @Override
+            protected Void doInBackground(Bitmap... images) {
+                Bitmap image = images[0];
+                Log.v(TAG, "width: " + image.getWidth());
+                Log.v(TAG, "height: " + image.getHeight());
+                try {
+                    final JSONArray faces = ImageService.detectFaces(image);
+                    if (faces.length() == 0) {
+                        Log.d(TAG, "no faces detected");
+                    } else {
+                        for (int i = 0; i < faces.length(); i++) {
+                            final JSONObject face = faces.getJSONObject(i);
+                            final String faceId = face.getString("faceId");
+                            Log.d(TAG, "faceId: " + faceId);
+                            final JSONObject faceAttributes = face.getJSONObject("faceAttributes");
+                            Log.d(TAG, "gender: " + faceAttributes.getString("gender"));
+                            Log.d(TAG, "age: " + faceAttributes.getString("age"));
+
+                            if (lastFaceId != null) {
+                                final JSONObject response = ImageService.verifyFaces(lastFaceId, faceId);
+                                Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
+                                Log.d(TAG, "confidence: " + response.getString("confidence"));
+                            }
+                            lastFaceId = faceId;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                }
+                return null;
+            }
+        }.execute(image);
+    }
+
     @Override
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
@@ -257,9 +249,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 dispatchTakePictureIntent();
             }
         });
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
     
     @Override
