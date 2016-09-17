@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -150,13 +149,12 @@ public class OpenPhotoActivity extends AppCompatActivity {
         return bitmap;
     }
     
-    protected Bitmap cutUpperLeftCornerOfBitmap(Bitmap bitmap) {
+    private Bitmap cropLeftThird(Bitmap bitmap) {
         // cut the upper left corner
-        Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth() / 2, bitmap.getHeight() / 2, Bitmap.Config.ARGB_8888);  
-        Rect destRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2);
-        Rect srcRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2); 
+        Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth() / 3, bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Rect rect = new Rect(0, 0, bitmap.getWidth() / 3, bitmap.getHeight());
         Canvas canvas = new Canvas(newBitmap);
-        canvas.drawBitmap(bitmap, srcRect, destRect, null);
+        canvas.drawBitmap(bitmap, rect, rect, null);
         return newBitmap;
     }
     
@@ -169,7 +167,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Bitmap bitmap = showImage();
                 if (idUpload) {
                     extractIdentityInformation(bitmap);
-                    bitmap = cutUpperLeftCornerOfBitmap(bitmap);
+                    bitmap = cropLeftThird(bitmap);
                 }
                 detectFace(bitmap);
             }
@@ -237,7 +235,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
         runOnUiThread(new DisplayConfirmation(positive));
     }
     
-    
     private void extractIdentityInformation(Bitmap image) {
         new AsyncTask<Bitmap, Void, Void>() {
             @Override
@@ -251,7 +248,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
                     
                     Log.d(TAG, "Parsed identity: " + identityCard);
                     displayText(identityCard);
-                    
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
