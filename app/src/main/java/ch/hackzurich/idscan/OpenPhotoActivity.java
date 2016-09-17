@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -150,13 +149,12 @@ public class OpenPhotoActivity extends AppCompatActivity {
         return bitmap;
     }
     
-    protected Bitmap cutUpperLeftCornerOfBitmap(Bitmap bitmap) {
+    private Bitmap cropLeftThird(Bitmap bitmap) {
         // cut the upper left corner
-        Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth() / 2, bitmap.getHeight() / 2, Bitmap.Config.ARGB_8888);  
-        Rect destRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2);
-        Rect srcRect = new Rect(0, 0, bitmap.getWidth() / 2, bitmap.getHeight() / 2); 
+        Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth() / 3, bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Rect rect = new Rect(0, 0, bitmap.getWidth() / 3, bitmap.getHeight());
         Canvas canvas = new Canvas(newBitmap);
-        canvas.drawBitmap(bitmap, srcRect, destRect, null);
+        canvas.drawBitmap(bitmap, rect, rect, null);
         return newBitmap;
     }
     
@@ -169,7 +167,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Bitmap bitmap = showImage();
                 if (idUpload) {
                     extractIdentityInformation(bitmap);
-                    bitmap = cutUpperLeftCornerOfBitmap(bitmap);
+                    bitmap = cropLeftThird(bitmap);
                 }
                 detectFace(bitmap);
             }
@@ -237,7 +235,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
         runOnUiThread(new DisplayConfirmation(positive));
     }
     
-    
     private void extractIdentityInformation(Bitmap image) {
         new AsyncTask<Bitmap, Void, Void>() {
             @Override
@@ -251,7 +248,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
                     
                     Log.d(TAG, "Parsed identity: " + identityCard);
                     displayText(identityCard);
-                    
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
@@ -262,13 +258,14 @@ public class OpenPhotoActivity extends AppCompatActivity {
 
     private String lastFaceId = null;
 
-    private void detectFace(Bitmap image) {
-        new AsyncTask<Bitmap, Void, Void>() {
+    private AsyncTask<Bitmap, Void, String> detectFace(Bitmap image) {
+        return new AsyncTask<Bitmap, Void, String>() {
             @Override
-            protected Void doInBackground(Bitmap... images) {
+            protected String doInBackground(Bitmap... images) {
                 Bitmap image = images[0];
                 Log.v(TAG, "width: " + image.getWidth());
                 Log.v(TAG, "height: " + image.getHeight());
+                String faceId = null;
                 try {
                     final JSONArray faces = imageService.detectFaces(image);
                     if (faces.length() == 0) {
@@ -288,21 +285,18 @@ public class OpenPhotoActivity extends AppCompatActivity {
                         });
                         for (int i = 0; i < faces.length(); i++) {
                             final JSONObject face = faces.getJSONObject(i);
-                            final String faceId = face.getString("faceId");
+                            faceId = face.getString("faceId");
                             Log.d(TAG, "faceId: " + faceId);
                             final JSONObject faceAttributes = face.getJSONObject("faceAttributes");
                             Log.d(TAG, "gender: " + faceAttributes.getString("gender"));
                             Log.d(TAG, "age: " + faceAttributes.getString("age"));
 
+                            // TODO: Move to the caller!
                             if (lastFaceId != null) {
                                 final JSONObject response = imageService.verifyFaces(lastFaceId, faceId);
                                 Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
                                 Log.d(TAG, "confidence: " + response.getString("confidence"));
-                                if (response.getString("isIdentical").equalsIgnoreCase("true")) {
-                                    displayConfirmation(true);
-                                } else {
-                                    displayConfirmation(false);
-                                }
+                                displayConfirmation(response.getString("isIdentical").equalsIgnoreCase("true"));
                             }
                             lastFaceId = faceId;
                         }
@@ -310,7 +304,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
-                return null;
+                return faceId;
             }
         }.execute(image);
     }
