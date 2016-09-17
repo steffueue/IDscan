@@ -21,11 +21,11 @@ public class ImageService {
 
     private static final String TAG = ImageService.class.getSimpleName();
 
-    private static String getConfigValue(String name) {
-        return Configuration.getConfigValue(OpenPhotoActivity.activity, name);
+    private String getConfigValue(String name) {
+        return Configuration.getConfigValue(OpenPhotoActivity.getActivity(), name);
     }
 
-    private static HttpURLConnection getConnection(String endPoint, String contentType, String subscriptionKey) throws IOException, JSONException {
+    private HttpURLConnection getConnection(String endPoint, String contentType, String subscriptionKey) throws IOException, JSONException {
         final URL url = new URL(getConfigValue(endPoint));
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -36,7 +36,7 @@ public class ImageService {
         return connection;
     }
 
-    private static void writeImage(Bitmap image, HttpURLConnection connection) throws IOException {
+    private void writeImage(Bitmap image, HttpURLConnection connection) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         byte[] bytes = stream.toByteArray();
@@ -48,7 +48,7 @@ public class ImageService {
         outputStream.close();
     }
 
-    private static String getResponse(HttpURLConnection connection) throws IOException, JSONException {
+    private String getResponse(HttpURLConnection connection) throws IOException, JSONException {
         Log.v(TAG, "Response Code: " + connection.getResponseCode());
 
         final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
@@ -63,21 +63,21 @@ public class ImageService {
         return response.toString();
     }
 
-    public static JSONObject extractText(Bitmap image) throws IOException, JSONException {
+    public JSONObject extractText(Bitmap image) throws IOException, JSONException {
         Log.v(TAG, "extract text");
         HttpURLConnection connection = getConnection("microsoft.ocr.api.url", "octet-stream", "microsoft.ocr.api.key");
         writeImage(image, connection);
         return new JSONObject(getResponse(connection));
     }
 
-    public static JSONArray detectFaces(Bitmap image) throws Exception {
+    public JSONArray detectFaces(Bitmap image) throws Exception {
         Log.v(TAG, "detect face");
         HttpURLConnection connection = getConnection("microsoft.face.detect.api.url", "octet-stream", "microsoft.face.api.key");
         writeImage(image, connection);
         return new JSONArray(getResponse(connection));
     }
 
-    public static JSONObject verifyFaces(String faceId1, String faceId2) throws Exception {
+    public JSONObject verifyFaces(String faceId1, String faceId2) throws Exception {
         Log.v(TAG, "verify faces");
         HttpURLConnection connection = getConnection("microsoft.face.verify.api.url", "json", "microsoft.face.api.key");
 

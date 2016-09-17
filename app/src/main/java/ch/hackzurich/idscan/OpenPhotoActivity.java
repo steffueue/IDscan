@@ -41,16 +41,26 @@ public class OpenPhotoActivity extends AppCompatActivity {
     
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     
-    public static OpenPhotoActivity activity;
-    
-    public LabelService labelService = new LabelService();
-    
+    private static OpenPhotoActivity activity;
+
+    public static OpenPhotoActivity getActivity() {
+        return activity;
+    }
+
+    private ImageService imageService = new ImageService();
+
+    private LabelService labelService = new LabelService();
+
     /**
      * The file which stores the photo that we just took.
      */
     private File photoFile;
     
     private boolean idUpload = false;
+    
+    private boolean rotate = false;
+    
+    private ImageView clickedImageView;
 
     /**
      * Create a unique file name.
@@ -132,9 +142,11 @@ public class OpenPhotoActivity extends AppCompatActivity {
     }
     
     private Bitmap showImage() {
-        ImageView imageView = (ImageView) findViewById(R.id.photo);
         Bitmap bitmap = createBitMap();
-        imageView.setImageBitmap(scaleAndRotateBitmap(bitmap));
+        if (rotate) {
+            bitmap = scaleAndRotateBitmap(bitmap);
+        }
+        clickedImageView.setImageBitmap(bitmap);
         return bitmap;
     }
     
@@ -181,9 +193,17 @@ public class OpenPhotoActivity extends AppCompatActivity {
             TextView nationalityText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_nationality);
             nationalityText.setText(identityCard.getNationality());
             TextView dateOfBirth = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_dateofbirth);
+            TextView textAge = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_age);
             if (identityCard.getDateOfBirth() != null) {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.mm.yyyy");
                 dateOfBirth.setText(simpleDateFormat.format(identityCard.getDateOfBirth()));
+                final double age = (new Date().getTime() - identityCard.getDateOfBirth().getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+                textAge.setText(Double.toString(Math.round(age * 10) / 10.0));
+                if (age >= 18.0) {
+                    textAge.setTextColor(Color.parseColor("#338A53"));
+                } else {
+                    textAge.setTextColor(Color.parseColor("#B51D1D"));
+                }
             }
         }
     }
@@ -205,10 +225,10 @@ public class OpenPhotoActivity extends AppCompatActivity {
             TextView confirmationText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_confirmation);
             if (positive) {
                 confirmationText.setText("Identität bestätigt");
-                confirmationText.setTextColor(Color.parseColor("#00ff00"));
+                confirmationText.setTextColor(Color.parseColor("#338A53"));
             } else {
                 confirmationText.setText("Identität nicht bestätigt");
-                confirmationText.setTextColor(Color.parseColor("#ff0000"));
+                confirmationText.setTextColor(Color.parseColor("#B51D1D"));
             }
         }
     }
@@ -226,7 +246,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Log.v(TAG, "width: " + image.getWidth());
                 Log.v(TAG, "height: " + image.getHeight());
                 try {
-                    final JSONObject jsonObject = ImageService.extractText(image);
+                    final JSONObject jsonObject = imageService.extractText(image);
                     IdentityCard identityCard = labelService.parse(jsonObject);
                     
                     Log.d(TAG, "Parsed identity: " + identityCard);
@@ -239,7 +259,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
             }
         }.execute(image);
     }
-    
 
     private String lastFaceId = null;
 
@@ -251,7 +270,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Log.v(TAG, "width: " + image.getWidth());
                 Log.v(TAG, "height: " + image.getHeight());
                 try {
-                    final JSONArray faces = ImageService.detectFaces(image);
+                    final JSONArray faces = imageService.detectFaces(image);
                     if (faces.length() == 0) {
                         Log.d(TAG, "no faces detected");
                         runOnUiThread(new Runnable() {
@@ -276,7 +295,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                             Log.d(TAG, "age: " + faceAttributes.getString("age"));
 
                             if (lastFaceId != null) {
-                                final JSONObject response = ImageService.verifyFaces(lastFaceId, faceId);
+                                final JSONObject response = imageService.verifyFaces(lastFaceId, faceId);
                                 Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
                                 Log.d(TAG, "confidence: " + response.getString("confidence"));
                                 if (response.getString("isIdentical").equalsIgnoreCase("true")) {
@@ -318,19 +337,23 @@ public class OpenPhotoActivity extends AppCompatActivity {
     
         activity = this;
     
-        ImageView imageView = (ImageView) findViewById(R.id.photo); 
+        final ImageView imageView = (ImageView) findViewById(R.id.photo); 
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = true;
+                clickedImageView = imageView;
+                rotate = true;
                 dispatchTakePictureIntent();
             }
         });
-        ImageView selfieButton = (ImageView) findViewById(R.id.selfie);
+        final ImageView selfieButton = (ImageView) findViewById(R.id.selfie);
         selfieButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = false;
+                clickedImageView = selfieButton;
+                rotate = false;
                 dispatchTakePictureIntent();
             }
         });
