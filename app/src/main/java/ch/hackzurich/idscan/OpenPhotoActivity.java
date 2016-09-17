@@ -57,6 +57,10 @@ public class OpenPhotoActivity extends AppCompatActivity {
     private File photoFile;
     
     private boolean idUpload = false;
+    
+    private boolean rotate = false;
+    
+    private ImageView clickedImageView;
 
     /**
      * Create a unique file name.
@@ -138,9 +142,11 @@ public class OpenPhotoActivity extends AppCompatActivity {
     }
     
     private Bitmap showImage() {
-        ImageView imageView = (ImageView) findViewById(R.id.photo);
         Bitmap bitmap = createBitMap();
-        imageView.setImageBitmap(scaleAndRotateBitmap(bitmap));
+        if (rotate) {
+            bitmap = scaleAndRotateBitmap(bitmap);
+        }
+        clickedImageView.setImageBitmap(bitmap);
         return bitmap;
     }
     
@@ -329,19 +335,23 @@ public class OpenPhotoActivity extends AppCompatActivity {
     
         activity = this;
     
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        final ImageView imageView = (ImageView) findViewById(R.id.photo); 
+        imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = true;
+                clickedImageView = imageView;
+                rotate = true;
                 dispatchTakePictureIntent();
             }
         });
-        FloatingActionButton fab2 = (FloatingActionButton) findViewById(R.id.fab2);
-        fab2.setOnClickListener(new View.OnClickListener() {
+        final ImageView selfieButton = (ImageView) findViewById(R.id.selfie);
+        selfieButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = false;
+                clickedImageView = selfieButton;
+                rotate = false;
                 dispatchTakePictureIntent();
             }
         });
