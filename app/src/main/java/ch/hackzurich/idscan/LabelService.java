@@ -11,9 +11,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- *
- */
 public class LabelService {
     
     private static final String TAG = LabelService.class.getSimpleName();
