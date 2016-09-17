@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
@@ -92,11 +93,6 @@ public class OpenPhotoActivity extends AppCompatActivity {
         }
     }
     
-    @Override
-    public void onSaveInstanceState(Bundle bundle) {
-        super.onSaveInstanceState(bundle);
-    }
-    
     /**
      * Returns the bitmap from the taken photo or null in case the file was not found.
      */
@@ -109,16 +105,19 @@ public class OpenPhotoActivity extends AppCompatActivity {
         return null;
     }
     
+    private void showImage() {
+        ImageView imageView = (ImageView) findViewById(R.id.photo);
+        Bitmap bitmap = createBitMap();
+        imageView.setImageBitmap(bitmap);
+    }
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         // Check which request we're responding to
         if (requestCode == REQUEST_IMAGE_CAPTURE) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
-                ImageView imageView = (ImageView) findViewById(R.id.photo);
-                Bitmap bitmap = createBitMap();
-                imageView.setImageBitmap(bitmap);
-                
+                showImage();
 //                new AsyncTask<byte[], Void, Void>() {
 //    
 //                    @Override 
@@ -132,12 +131,24 @@ public class OpenPhotoActivity extends AppCompatActivity {
     }
     
     @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        if (photoFile != null) {
+            bundle.putString("photoFile", photoFile.getAbsolutePath());
+        }
+    }
+    
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_open_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         
+        if (savedInstanceState != null && savedInstanceState.getString("photoFile") != null) {
+            photoFile = new File(savedInstanceState.getString("photoFile"));
+            showImage();
+        }
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
