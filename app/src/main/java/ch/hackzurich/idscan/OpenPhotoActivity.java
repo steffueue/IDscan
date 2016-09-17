@@ -27,6 +27,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import ch.hackzurich.idscan.config.Configuration;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,6 +39,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
 
     private static String capturedPhotoFilePath;
+
+    public static OpenPhotoActivity activity;
     
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -48,6 +52,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         capturedPhotoFilePath = tempFile.getAbsolutePath();
+        Log.d(TAG, "capturedPhotoFilePath: " + capturedPhotoFilePath);
         Uri capturedPhotoUri = Uri.fromFile(tempFile);
         
         takePictureIntent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, capturedPhotoUri);
@@ -127,6 +132,36 @@ public class OpenPhotoActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void testImageService() {
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... none) {
+                final Bitmap image = BitmapFactory.decodeResource(getResources(), R.drawable.pass);
+                Log.i(TAG, "width: " + image.getWidth());
+                Log.i(TAG, "height: " + image.getHeight());
+                try {
+                    final JSONObject jsonObject = ImageService.extractText(image);
+                    final JSONArray regions = jsonObject.getJSONArray("regions");
+                    for (int i = 0; i < regions.length(); i++) {
+                        Log.d(TAG, "Region " + (i + 1));
+                        final JSONArray lines = regions.getJSONObject(i).getJSONArray("lines");
+                        for (int j = 0; j < lines.length(); j++) {
+                            Log.d(TAG, "Line " + (j + 1));
+                            final JSONArray words = lines.getJSONObject(j).getJSONArray("words");
+                            for (int k = 0; k < words.length(); k++) {
+                                Log.d(TAG, "Word " + (k + 1) + ": " + words.getJSONObject(k).getString("text"));
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                }
+                return null;
+            }
+        }.execute();
+    }
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +169,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_open_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        activity = this;
         
         if (savedInstanceState != null) {
             capturedPhotoFilePath = savedInstanceState.getString("fileName");
@@ -143,7 +180,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dispatchTakePictureIntent();
+                testImageService();
+//                dispatchTakePictureIntent();
             }
         });
     }
