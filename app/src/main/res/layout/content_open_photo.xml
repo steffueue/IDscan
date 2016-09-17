@@ -20,7 +20,7 @@
                        android:adjustViewBounds="true"
                        android:scaleType="fitStart"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="32dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity information" style="@android:style/TextAppearance.Large"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity Information" style="@android:style/TextAppearance.Large"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="16dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Surname:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_surname" style="@android:style/TextAppearance.Medium"/>
@@ -37,6 +37,7 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Date of Birth:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_dateofbirth" style="@android:style/TextAppearance.Medium"/>
                 </LinearLayout>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_confirmation" style="@android:style/TextAppearance.Medium"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -3,6 +3,8 @@ package ch.hackzurich.idscan;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import android.widget.TextView;
+import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -44,6 +47,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
      * The file which stores the photo that we just took.
      */
     private File photoFile;
+    
+    private boolean idUpload = false;
 
     /**
      * Create a unique file name.
@@ -111,10 +116,23 @@ public class OpenPhotoActivity extends AppCompatActivity {
         return null;
     }
     
+    private Bitmap scaleAndRotateBitmap(Bitmap bitmap) {
+        if (bitmap.getHeight() > bitmap.getWidth()) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(90);
+            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, (int) ((double) bitmap.getWidth() / 4.0), (int) ((double) bitmap.getHeight() / 4.0), false);
+            Bitmap rotatedBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
+            return rotatedBitmap;
+        } else {
+            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, (int) ((double) bitmap.getWidth() / 4.0), (int) ((double) bitmap.getHeight() / 4.0), false);
+            return scaledBitmap;
+        }
+    }
+    
     private Bitmap showImage() {
         ImageView imageView = (ImageView) findViewById(R.id.photo);
         Bitmap bitmap = createBitMap();
-        imageView.setImageBitmap(bitmap);
+        imageView.setImageBitmap(scaleAndRotateBitmap(bitmap));
         return bitmap;
     }
     
@@ -125,7 +143,9 @@ public class OpenPhotoActivity extends AppCompatActivity {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 Bitmap bitmap = showImage();
-                extractIdentityInformation(bitmap);
+                if (idUpload) {
+                    extractIdentityInformation(bitmap);
+                }
                 detectFace(bitmap);
             }
         }
@@ -158,6 +178,32 @@ public class OpenPhotoActivity extends AppCompatActivity {
     private void displayText(IdentityCard identityCard) {
         runOnUiThread(new DisplayIdentityCard(identityCard));
     }
+    
+    static class DisplayConfirmation implements Runnable {
+    
+        private final boolean positive;
+        
+        DisplayConfirmation(boolean positive) {
+            this.positive = positive;
+        }
+        
+        @Override
+        public void run() {
+            TextView confirmationText = (TextView) OpenPhotoActivity.activity.findViewById(R.id.text_confirmation);
+            if (positive) {
+                confirmationText.setText("Identität bestätigt");
+                confirmationText.setTextColor(Color.parseColor("#00ff00"));
+            } else {
+                confirmationText.setText("Identität nicht bestätigt");
+                confirmationText.setTextColor(Color.parseColor("#ff0000"));
+            }
+        }
+    }
+    
+    private void displayConfirmation(boolean positive) {
+        runOnUiThread(new DisplayConfirmation(positive));
+    }
+    
     
     private void extractIdentityInformation(Bitmap image) {
         new AsyncTask<Bitmap, Void, Void>() {
@@ -195,7 +241,19 @@ public class OpenPhotoActivity extends AppCompatActivity {
                     final JSONArray faces = ImageService.detectFaces(image);
                     if (faces.length() == 0) {
                         Log.d(TAG, "no faces detected");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(OpenPhotoActivity.activity, "No face detected :-(", Toast.LENGTH_LONG).show();
+                            }
+                        });
                     } else {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(OpenPhotoActivity.activity, "Face detected :-)", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                         for (int i = 0; i < faces.length(); i++) {
                             final JSONObject face = faces.getJSONObject(i);
                             final String faceId = face.getString("faceId");
@@ -208,6 +266,11 @@ public class OpenPhotoActivity extends AppCompatActivity {
                                 final JSONObject response = ImageService.verifyFaces(lastFaceId, faceId);
                                 Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
                                 Log.d(TAG, "confidence: " + response.getString("confidence"));
+                                if (response.getString("isIdentical").equalsIgnoreCase("true")) {
+                                    displayConfirmation(true);
+                                } else {
+                                    displayConfirmation(false);
+                                }
                             }
                             lastFaceId = faceId;
                         }
@@ -219,7 +282,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
             }
         }.execute(image);
     }
-
+    
     @Override
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
@@ -246,6 +309,15 @@ public class OpenPhotoActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                idUpload = true;
+                dispatchTakePictureIntent();
+            }
+        });
+        FloatingActionButton fab2 = (FloatingActionButton) findViewById(R.id.fab2);
+        fab2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                idUpload = false;
                 dispatchTakePictureIntent();
             }
         });
