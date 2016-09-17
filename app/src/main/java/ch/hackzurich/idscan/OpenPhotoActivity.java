@@ -318,16 +318,16 @@ public class OpenPhotoActivity extends AppCompatActivity {
     
         activity = this;
     
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        ImageView imageView = (ImageView) findViewById(R.id.photo); 
+        imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = true;
                 dispatchTakePictureIntent();
             }
         });
-        FloatingActionButton fab2 = (FloatingActionButton) findViewById(R.id.fab2);
-        fab2.setOnClickListener(new View.OnClickListener() {
+        ImageView selfieButton = (ImageView) findViewById(R.id.selfie);
+        selfieButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 idUpload = false;

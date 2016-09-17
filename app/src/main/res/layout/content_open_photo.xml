@@ -14,14 +14,16 @@
 
     <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity Information" style="@android:style/TextAppearance.Large"/>
             <ImageView android:layout_width="wrap_content" 
                        android:layout_height="wrap_content" 
-                       android:id="@+id/photo" android:src="@drawable/template"
+                       android:id="@+id/photo" android:src="@drawable/id_template_touch"
                        android:adjustViewBounds="true"
-                       android:scaleType="fitStart"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="32dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity Information" style="@android:style/TextAppearance.Large"/>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="16dp">
+                       android:scaleType="fitStart"
+                       android:clickable="true"
+            />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Surname:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_surname" style="@android:style/TextAppearance.Medium"/>
                 </LinearLayout>
@@ -37,8 +39,16 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Date of Birth:" android:width="128dp" style="@android:style/TextAppearance.Medium"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_dateofbirth" style="@android:style/TextAppearance.Medium"/>
                 </LinearLayout>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_confirmation" style="@android:style/TextAppearance.Medium"/>
             </LinearLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Identity Confirmation" style="@android:style/TextAppearance.Large" android:layout_marginTop="16dp"/>
+            <ImageView android:layout_width="wrap_content" 
+                       android:layout_height="wrap_content" 
+                       android:id="@+id/selfie" android:src="@drawable/selfie_original"
+                       android:adjustViewBounds="true"
+                       android:scaleType="fitStart"
+                       android:clickable="true"
+            />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_confirmation" style="@android:style/TextAppearance.Medium"/>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>
