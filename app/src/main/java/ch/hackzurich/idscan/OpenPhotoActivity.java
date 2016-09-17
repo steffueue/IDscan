@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -196,7 +197,8 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.mm.yyyy");
                 dateOfBirth.setText(simpleDateFormat.format(identityCard.getDateOfBirth()));
                 final double age = (new Date().getTime() - identityCard.getDateOfBirth().getTime()) / (1000 * 60 * 60 * 24 * 365.2422);
-                textAge.setText(Double.toString(Math.round(age * 10) / 10.0));
+                Log.d(TAG, "age: " + age);
+                textAge.setText(Long.toString(Math.round(Math.floor(age))));
                 if (age >= 18.0) {
                     textAge.setTextColor(Color.parseColor("#338A53"));
                 } else {
@@ -256,16 +258,15 @@ public class OpenPhotoActivity extends AppCompatActivity {
         }.execute(image);
     }
 
-    private String lastFaceId = null;
+    private String faceIdOfCard = null;
 
-    private AsyncTask<Bitmap, Void, String> detectFace(Bitmap image) {
-        return new AsyncTask<Bitmap, Void, String>() {
+    private void detectFace(Bitmap image) {
+        new AsyncTask<Bitmap, Void, Void>() {
             @Override
-            protected String doInBackground(Bitmap... images) {
+            protected Void doInBackground(Bitmap... images) {
                 Bitmap image = images[0];
                 Log.v(TAG, "width: " + image.getWidth());
                 Log.v(TAG, "height: " + image.getHeight());
-                String faceId = null;
                 try {
                     final JSONArray faces = imageService.detectFaces(image);
                     if (faces.length() == 0) {
@@ -285,26 +286,29 @@ public class OpenPhotoActivity extends AppCompatActivity {
                         });
                         for (int i = 0; i < faces.length(); i++) {
                             final JSONObject face = faces.getJSONObject(i);
-                            faceId = face.getString("faceId");
+                            final String faceId = face.getString("faceId");
                             Log.d(TAG, "faceId: " + faceId);
                             final JSONObject faceAttributes = face.getJSONObject("faceAttributes");
                             Log.d(TAG, "gender: " + faceAttributes.getString("gender"));
                             Log.d(TAG, "age: " + faceAttributes.getString("age"));
 
-                            // TODO: Move to the caller!
-                            if (lastFaceId != null) {
-                                final JSONObject response = imageService.verifyFaces(lastFaceId, faceId);
-                                Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
-                                Log.d(TAG, "confidence: " + response.getString("confidence"));
-                                displayConfirmation(response.getString("isIdentical").equalsIgnoreCase("true"));
+                            if (idUpload) {
+                                faceIdOfCard = faceId;
+                            } else {
+                                if (faceIdOfCard != null) {
+                                    final JSONObject response = imageService.verifyFaces(faceIdOfCard, faceId);
+                                    Log.d(TAG, "isIdentical: " + response.getString("isIdentical"));
+                                    Log.d(TAG, "confidence: " + response.getString("confidence"));
+                                    displayConfirmation(response.getString("isIdentical").equalsIgnoreCase("true"));
+                                }
                             }
-                            lastFaceId = faceId;
+
                         }
                     }
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
-                return faceId;
+                return null;
             }
         }.execute(image);
     }
