@@ -133,6 +133,7 @@ public class OpenPhotoActivity extends AppCompatActivity {
                 Log.i(TAG, "width: " + image.getWidth());
                 Log.i(TAG, "height: " + image.getHeight());
                 try {
+//                    ImageService.verifyFaces("1678c33c-faff-4727-a10f-15fc32ab88bd", "69f0fbca-5b67-4ed6-ace5-ef84cad53700");
                     final JSONObject jsonObject = ImageService.extractText(image);
                     final JSONArray regions = jsonObject.getJSONArray("regions");
                     for (int i = 0; i < regions.length(); i++) {
