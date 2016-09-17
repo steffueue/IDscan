@@ -329,6 +329,9 @@ public class OpenPhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_open_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        toolbar.setTitle("");
+        toolbar.setSubtitle("");
     
         if (savedInstanceState != null && savedInstanceState.getString("photoFile") != null) {
             photoFile = new File(savedInstanceState.getString("photoFile"));
